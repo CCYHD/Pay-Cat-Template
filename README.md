@@ -1,5 +1,5 @@
 # Pay-Cat-Template
-Template files for Pay Cat Apps Script projects
+Template files for Pay Cat's Apps Script projects
 
 
 CD.js contains common functions for use across Google Apps Script projects
