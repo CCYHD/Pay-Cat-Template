@@ -198,6 +198,60 @@ var Keypay = (function() {
     throw new Error("API call failed " + attempts + " times: url = " + url);
   }
 
+  // Deletes data in Keypay
+  // urlType determines base of URL ("bus" for .../business/businessId/, "ess" for .../ess/)
+  function _apiDelete(urlType, apiUrl, apiData) {
+
+    if (!apiKey) {
+      throw new Error("Error, please set Keypay.apiKey before making API call");
+    }
+    
+    var encodedApiKey = Utilities.base64EncodeWebSafe(apiKey);
+
+    if (urlType == "bus") {
+      if (!businessId) {
+        throw new Error("Error, please set Keypay.businessId before making API call");
+      }
+      var urlBase = 'https://api.yourpayroll.com.au/api/v2/business/' + businessId;
+
+    } else if (urlType == "ess") {
+      var urlBase = 'https://api.yourpayroll.com.au/api/v2/ess/';
+
+    } else {
+      throw new Error("apiGet called with invalid URL type: " + urlType);
+    }
+
+    var headers = {
+          'Authorization': 'Basic ' + encodedApiKey
+        };
+  
+    var options = {
+      'method': 'delete',
+      'contentType': 'application/json',
+      'headers': headers,
+      'muteHttpExceptions' : true
+    };
+    
+    var concatUrl = urlBase + apiUrl;
+    
+    // If there is data in apiData, join and concatenate to URL
+    if (typeof apiData !== "undefined") {
+      concatUrl = concatUrl + '?' + _convertObjToUrl(apiData);
+    }
+
+    var response = _tryCall(concatUrl, options);
+    var responseCode = response.getResponseCode();
+
+    if (responseCode == 200) {
+      return response;
+    } else {
+      Logger.log("Uh oh, " + concatUrl + " sent response code " + responseCode);
+      Logger.log("Content = " + response.getContentText());
+      return response;
+    }
+
+  }  
+
 
   function _convertObjToUrl(obj) {
     var str = "";
@@ -402,6 +456,9 @@ var Keypay = (function() {
     return _apiGet('bus', '/leavecategory');
   }
 
+  function deletePayRateTemplate(payRateTemplateId) {
+    return _apiDelete('bus', '/payratetemplate/' + payRateTemplateId);
+  }
 
   return {
     start: initialise,
@@ -432,7 +489,8 @@ var Keypay = (function() {
     createLeaveCategory: createLeaveCategory,
     updatePayCategory: updatePayCategory,
     getLeaveCategories: getLeaveCategories,
-    createPayCategory: createPayCategory
+    createPayCategory: createPayCategory,
+    deletePayRateTemplate: deletePayRateTemplate
   }
 
 })();

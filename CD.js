@@ -29,16 +29,27 @@ var CD = {
   },
   
   /**
-  * Gets the rows of a sheet
+  * Gets the rows of a sheet as a set of mapped rows
+  * 
+  * @param {(Sheet|string)} sheet - The sheet object or name of the sheet
+  * @returns {array[]} An array of row objects
+  */
+  getRows: function(sheet) {
+    var rows = this.getTable(sheet);
+    return this.mapRows(rows);
+  },
+
+  /**
+  * Gets the rows of a sheet as a 2D array
   * 
   * @param {(Sheet|string)} sheet - The sheet object or name of the sheet
   * @returns {array[]} An array of row arrays
   */
-  getRows: function(sheet) {
+  getTable: function(sheet) {
     if (typeof sheet == "string") {
       sheet = this.getSheet(sheet);
     }
-    var rows = sheet.getDataRange().getValues();
+    var rows = sheet.getDataRange().getDisplayValues();
     return rows;
   },
   
@@ -65,16 +76,15 @@ var CD = {
   /**
    * Combines an array of rows into a mapped obj using column with header "idColName"
    * 
-   * @param {array[]} rows - An array of row arrays
+   * @param {array[]} rows - An array of row objects
    * @param {string} idColName - The title from the header row to merge entries based on
    * @param {boolean} combineEntries - Whether to use the last entry found, or generate an array of matching entries
    * @returns {object} An object with a property for each unique entry in the id column, each of which contains an array of mapped rows
    */
   rows2obj: function(rows, idColName, combineEntries) {
-    var mappedRows = this.mapRows(rows);
     var combinedObj = {};
-    for (var i in mappedRows) {
-      var obj = mappedRows[i];
+    for (var i in rows) {
+      var obj = rows[i];
       var id = obj[idColName];
       if (combineEntries) {
         if (combinedObj[id] === undefined) {
@@ -93,7 +103,7 @@ var CD = {
    * 
    * @param {string|Sheet} sheet - The sheet object, or name of the sheet
    * @param {string} idColName - The title from the header row to merge entries based on
-   * @param {boolean} combineEntries - Whether to use the last entry found, or generate an array of matching entries
+   * @param {boolean} combineEntries - If true, return an array of all entries matching each id, otherwise return last entries of each id
    * @returns {object} An object with a property for each unique entry in the id column, each of which contains an array of mapped rows
    */
   getObj: function(sheet, idColName, combineEntries) {
@@ -209,17 +219,29 @@ var CD = {
   },
   
   /**
+  * Create a new sheet, fill it with a data table, then clean up its formatting
+  *
+  * @param {string} sheetName - The name of the sheet to be created/cleared out
+  * @param {array[]} rows - An array of rows (arrays of equal length) to print to the sheet
+  * @returns {Sheet} The generated sheet
+  */
+  printTable: function(sheetName, table) {
+    var sheet = this.makeNewSheet(sheetName);
+    this.appendRows(sheet, table);
+    this.prettyUp(sheet);
+    return sheet;
+  },
+
+  /**
   * Create a new sheet, fill it with data from rows, then clean up its formatting
   *
   * @param {string} sheetName - The name of the sheet to be created/cleared out
-  * @param {array} rows - An array of rows (arrays of equal length) to print to the sheet
+  * @param {object[]} rows - An array of objects to print to the sheet
   * @returns {Sheet} The generated sheet
   */
-  print: function(sheetName, rows) {
-    var sheet = this.makeNewSheet(sheetName);
-    this.appendRows(sheet, rows);
-    this.prettyUp(sheet);
-    return sheet;
+  printRows: function(sheet, rows) {
+    var table = this.tabulateArray(rows);
+    return this.printTable(table);
   },
   
   // ---------------------------------- Other Output ----------------------------------
@@ -298,6 +320,11 @@ var CD = {
       htmlOutput.setWidth(width);
     }
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, title);
+  },
+
+  displayObject: function(obj, title) {
+    title = title ? title : "";
+    CD.displayDialog("<pre><code>" + JSON.stringify(obj, null, 2) + "</pre></code>", title, 800, 800);
   },
   
   // ---------------------------------- Date Manipulation ----------------------------------
