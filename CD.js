@@ -241,7 +241,7 @@ var CD = {
   */
   printRows: function(sheet, rows) {
     var table = this.tabulateArray(rows);
-    return this.printTable(table);
+    return this.printTable(sheet, table);
   },
   
   // ---------------------------------- Other Output ----------------------------------
