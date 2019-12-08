@@ -322,11 +322,29 @@ var CD = {
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, title);
   },
 
+  /**
+   * Opens a HTML dialog which diplays an object
+   * @param {Object} obj Object to be displayed
+   * @param {String} [title] Title of dialog
+   */
   displayObject: function(obj, title) {
     title = title ? title : "";
-    CD.displayDialog("<pre><code>" + JSON.stringify(obj, null, 2) + "</pre></code>", title, 800, 800);
+    this.displayDialog("<pre><code>" + JSON.stringify(obj, null, 2) + "</pre></code>", title, 800, 800);
   },
   
+  /**
+   * Generates a hash map
+   * @param {Object[]} array Array of objects to be mapped
+   * @param {String} idProperty The property to be used to identify each item
+   * @param {String} [returnProperty] The property to map to (if not specified, the full object will be returned)
+   */
+  hash: function(array, idProperty, returnProperty) {
+    var hashMap = {};
+    array.forEach(function(item) {
+      hashMap[item[idProperty]] = returnProperty ? item[returnProperty] : item;
+    });
+    return hashMap;
+  },
   // ---------------------------------- Date Manipulation ----------------------------------
 
   toAusDate: function(date) {
