@@ -179,6 +179,9 @@ var CD = {
    * @returns {Sheet} The sheet that was used
    */
   insertBorders: function(sheet, rowVsCol, side, index) {
+    if (typeof sheet == "string") {
+      sheet = this.makeNewSheet(sheet);
+    }
     var borderList = {
       "top": [true, null, null, null, null, null],
       "left": [null, true, null, null, null, null],
@@ -255,8 +258,12 @@ var CD = {
   tabulateArray: function(array, headerRow) {
     if (!headerRow) {
       var headerRow = [];
-      for (var property in array[0]) {
-        headerRow.push(property);
+      for (var i in array) {
+        for (var property in array[i]) {
+          if (headerRow.indexOf(property) == -1) {
+            headerRow.push(property);
+          }
+        }
       }
     }
 
@@ -264,7 +271,7 @@ var CD = {
     for (var i in array) {
       var row = [];
       for (var j in headerRow) {
-        var val = array[i][headerRow[j]] ? array[i][headerRow[j]] : "";
+        var val = array[i][headerRow[j]] === undefined ? "" : array[i][headerRow[j]];
         row.push(val);
       }
       rows.push(row);
@@ -280,6 +287,26 @@ var CD = {
         ss.deleteSheet(sheets[i]);
       }
     }
+  },
+
+  /**
+   * 
+   * @param {Sheet} sheet - The sheet to be used
+   * @param {string} range - The range to apply the formatting to
+   * @param {string} formula - The formula to be applied
+   * @param {string} colour - The colour to apply when the formula is satisfied
+   */
+  applyConditionalFormatting: function(sheet, range, formula, colour) {
+    var range = sheet.getRange(range);
+    var rule = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(formula)
+      .setBackground(colour)
+      .setRanges([range])
+      .build();
+    var rules = sheet.getConditionalFormatRules();
+    rules.push(rule);
+    sheet.setConditionalFormatRules(rules);
+    return sheet;
   },
   
   /**
@@ -345,6 +372,16 @@ var CD = {
     });
     return hashMap;
   },
+
+  findIn: function(array, propertyName, value) {
+    for (var i in array) {
+      if (array[i][propertyName] == value) {
+        return array[i];
+      }
+    }
+    return false;
+  },
+  
   // ---------------------------------- Date Manipulation ----------------------------------
 
   toAusDate: function(date) {
